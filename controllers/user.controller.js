@@ -28,13 +28,18 @@ exports.login = async(req,res)=>{
         const {email,password} = req.body;
         // console.log(password);
         
-        const user = await userModel.findOne({email});
+        const user = await userModel.findOne({email}).populate('userType', 'name');
         if(user){
             const isMatch =await hashing.isMatch(password,user.password)
             if(isMatch){
                 //return access token
                 const token = auth.createAccessToken({userId:user._id,userType:user.userType})
-                res.status(200).json({ accessToken: token});
+                res.status(200).json({ accessToken: token,user:{
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    userType: user.userType.name // Include the user type name
+                }});
 
             }else{
                 res.status(400).json({error:"this password wrond"});
@@ -54,7 +59,7 @@ exports.login = async(req,res)=>{
 
 exports.getUser = async(req,res)=>{
     try{
-        const users = await userModel.find().populate('userType','name');
+        const users = await userModel.find().populate('userType','user');
         
         res.status(201).json(users);
     }catch(err){

@@ -1,5 +1,5 @@
+//middlewares
 const jwt = require('jsonwebtoken');
-
 const mongoose = require('mongoose');
 const userModel = require('../models/user.model'); // Adjust the path
 const userTypeModel = require('../models/userType.model'); // Adjust the path
@@ -27,11 +27,13 @@ expiresIn: '1h': يعني التوكن ده صالح لمدة ساعة واحد�
  */
 
 exports.authMW = (req,res,next)=> {
+    console.log('ooooooooo= ',req)
     try{
         const token = req.header('Authorization')?.replace('Bearer ','');
         if(token){
             const verified = jwt.verify(token,secretKey);
             req.user = verified;
+            console.log("v",verified);
             next();
         }else{
             res.status(401).json({error:'access denied ,token missing'})
@@ -62,7 +64,7 @@ exports.isAdmin = async (req, res, next) => {
         // console.log('==>',req.user);
         
         if (req.user) {
-            console.log('hereeeeeeeeeeee= ')
+            // console.log('hereeeeeeeeeeee= ')
             const user = await userModel.findById(req.user.userId).populate('userType').exec();
             if (user && user.userType.name === 'admin') {
                 next();

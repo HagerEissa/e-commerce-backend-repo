@@ -79,3 +79,42 @@ exports.getTrendProducts = async(req,res)=>{
 
     }
 }
+
+
+exports.getProductForList = async (req, res) => {
+    try {
+        let { searchTerm, categoryId, sortBy, sortOrder, page, pageSize } = req.query;
+
+        // Default values
+        sortBy = sortBy || 'price';
+        sortOrder = sortOrder === 'asc' ? 1 : -1;
+        page = Number(page) || 1;
+        pageSize = Number(pageSize) || 10;
+
+        let queryFilter = {};
+
+        // Apply filters
+        // if (searchTerm && searchTerm !== 'null') {
+        //     queryFilter.name = { $regex: searchTerm, $options: 'i' };// Case-insensitive search
+        // }
+        if (searchTerm && searchTerm !== 'null') {
+            queryFilter.$or = [// The regex pattern ensures it finds partial matches, making searches more flexible.
+                { name: { $regex: ".*" + searchTerm + ".*", $options: 'i' } },
+                { desc: { $regex: ".*" + searchTerm + ".*", $options: 'i' } }
+            ];
+        }
+        if (categoryId && categoryId !== 'null') {
+            queryFilter.categoryId = categoryId;
+        }
+
+        // Find products
+        const products = await productModel.find(queryFilter)
+            .sort({ [sortBy]: +sortOrder })  // Dynamic sorting
+            .skip((page - 1) * pageSize)
+            .limit(pageSize);
+
+        res.status(200).json(products);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
